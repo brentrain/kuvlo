@@ -12,6 +12,8 @@ export default function InvoiceDetail() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [success, setSuccess] = useState(false)
+    const [sending, setSending] = useState(false)
+    const [sendSuccess, setSendSuccess] = useState(false)
     const router = useRouter()
     const params = useParams()
     const supabase = createClient()
@@ -57,6 +59,28 @@ export default function InvoiceDetail() {
         if (!confirm('Delete this invoice? This cannot be undone.')) return
         await supabase.from('invoices').delete().eq('id', params.id)
         router.push('/invoices')
+    }
+
+    const handleSendEmail = async () => {
+        if (!client?.email) {
+            alert('This client has no email address. Add one in the Clients section first.')
+            return
+        }
+        if (!confirm(`Send invoice to ${client.email}?`)) return
+        setSending(true)
+        const res = await fetch('/api/send-invoice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ invoice, items, client, company })
+        })
+        const data = await res.json()
+        if (data.error) {
+            alert('Failed to send: ' + JSON.stringify(data.error))
+        } else {
+            setSendSuccess(true)
+            setTimeout(() => setSendSuccess(false), 4000)
+        }
+        setSending(false)
     }
 
     const formatMoney = (cents: number) => '$' + (cents / 100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
@@ -162,6 +186,7 @@ export default function InvoiceDetail() {
           text-transform: uppercase;
           color: var(--ink);
         }
+        .header-actions { display: flex; gap: 10px; }
         .btn-steel {
           background: var(--steel);
           color: #fff;
@@ -176,6 +201,22 @@ export default function InvoiceDetail() {
           transition: background 0.15s;
         }
         .btn-steel:hover { background: #243547; }
+        .btn-steel:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-orange {
+          background: var(--orange);
+          color: #fff;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-weight: 700;
+          font-size: 14px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          padding: 11px 22px;
+          border: none;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn-orange:hover { background: #c44d00; }
+        .btn-orange:disabled { opacity: 0.6; cursor: not-allowed; }
         .invoice-card {
           background: #fff;
           border: 1.5px solid var(--border);
@@ -304,12 +345,13 @@ export default function InvoiceDetail() {
           border-bottom: 1px solid #c0392b;
           padding-bottom: 1px;
         }
-        .success { font-size: 13px; color: #27ae60; }
+        .status-saved { font-size: 13px; color: #27ae60; }
         @media (max-width: 768px) {
           .sidebar { display: none; }
           .main { padding: 24px 20px; }
           .invoice-info { grid-template-columns: 1fr 1fr; }
           .invoice-top { flex-direction: column; gap: 20px; }
+          .header-actions { flex-direction: column; }
         }
         @media print {
           .sidebar, .page-header, .invoice-footer { display: none; }
@@ -337,7 +379,12 @@ export default function InvoiceDetail() {
                             <a href="/invoices" className="back">← Invoices</a>
                             <h1>{invoice.invoice_number}</h1>
                         </div>
-                        <button className="btn-steel" onClick={() => window.print()}>Print / PDF</button>
+                        <div className="header-actions">
+                            <button className="btn-orange" onClick={handleSendEmail} disabled={sending}>
+                                {sending ? 'Sending...' : sendSuccess ? '✓ Sent!' : 'Email Invoice'}
+                            </button>
+                            <button className="btn-steel" onClick={() => window.print()}>Print / PDF</button>
+                        </div>
                     </div>
 
                     <div className="invoice-card">
@@ -422,15 +469,9 @@ export default function InvoiceDetail() {
                             {(company?.paypal_link || company?.stripe_link || company?.venmo_link) && (
                                 <div className="notes-section">
                                     <div className="notes-label">Pay This Invoice</div>
-                                    {company?.paypal_link && (
-                                        <div className="payment-link">PayPal: <a href={company.paypal_link} target="_blank">{company.paypal_link}</a></div>
-                                    )}
-                                    {company?.stripe_link && (
-                                        <div className="payment-link">Card: <a href={company.stripe_link} target="_blank">{company.stripe_link}</a></div>
-                                    )}
-                                    {company?.venmo_link && (
-                                        <div className="payment-link">Venmo: {company.venmo_link}</div>
-                                    )}
+                                    {company?.paypal_link && <div className="payment-link">PayPal: <a href={company.paypal_link} target="_blank">{company.paypal_link}</a></div>}
+                                    {company?.stripe_link && <div className="payment-link">Card: <a href={company.stripe_link} target="_blank">{company.stripe_link}</a></div>}
+                                    {company?.venmo_link && <div className="payment-link">Venmo: {company.venmo_link}</div>}
                                 </div>
                             )}
                         </div>
@@ -445,7 +486,7 @@ export default function InvoiceDetail() {
                                     <option value="overdue">Overdue</option>
                                     <option value="cancelled">Cancelled</option>
                                 </select>
-                                {success && <span className="success">Saved</span>}
+                                {success && <span className="status-saved">Saved</span>}
                             </div>
                             <button className="btn-delete" onClick={handleDelete}>Delete invoice</button>
                         </div>
