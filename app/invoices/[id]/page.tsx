@@ -8,6 +8,7 @@ export default function InvoiceDetail() {
     const [invoice, setInvoice] = useState<any>(null)
     const [items, setItems] = useState<any[]>([])
     const [client, setClient] = useState<any>(null)
+    const [company, setCompany] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [success, setSuccess] = useState(false)
@@ -32,6 +33,12 @@ export default function InvoiceDetail() {
                 .select('*')
                 .eq('invoice_id', params.id)
             setItems(lineItems || [])
+            const { data: companyData } = await supabase
+                .from('company_profiles')
+                .select('*')
+                .eq('user_id', user.id)
+                .single()
+            setCompany(companyData)
             setLoading(false)
         }
         load()
@@ -186,6 +193,7 @@ export default function InvoiceDetail() {
           font-weight: 800;
           font-size: 28px;
           color: var(--ink);
+          margin-bottom: 6px;
         }
         .invoice-brand span { color: var(--orange); }
         .invoice-num {
@@ -263,9 +271,11 @@ export default function InvoiceDetail() {
           color: var(--ink);
           text-align: right;
         }
-        .notes-section { margin-bottom: 32px; }
+        .notes-section { margin-bottom: 24px; }
         .notes-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
         .notes-text { font-size: 14px; color: var(--muted); font-style: italic; }
+        .payment-link { font-size: 14px; margin-bottom: 4px; }
+        .payment-link a { color: var(--orange); text-decoration: none; }
         .invoice-footer {
           padding: 24px 40px;
           border-top: 1.5px solid var(--border);
@@ -333,8 +343,16 @@ export default function InvoiceDetail() {
                     <div className="invoice-card">
                         <div className="invoice-top">
                             <div>
-                                <div className="invoice-brand">KUV<span>LO</span></div>
-                                <div style={{ fontSize: '13px', color: 'var(--muted)', marginTop: '4px' }}>kuvlo.io</div>
+                                {company?.company_name ? (
+                                    <div className="invoice-brand">{company.company_name}</div>
+                                ) : (
+                                    <div className="invoice-brand">KUV<span>LO</span></div>
+                                )}
+                                {company?.address && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{company.address}</div>}
+                                {company?.city && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{company.city}{company.state ? ', ' + company.state : ''} {company.zip_code || ''}</div>}
+                                {company?.phone && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{company.phone}</div>}
+                                {company?.email && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{company.email}</div>}
+                                {!company?.company_name && <div style={{ fontSize: '13px', color: 'var(--muted)', marginTop: '4px' }}>kuvlo.io</div>}
                             </div>
                             <div>
                                 <div className="invoice-meta-label">Invoice</div>
@@ -349,6 +367,8 @@ export default function InvoiceDetail() {
                                     <div className="info-value">{client?.name}</div>
                                     {client?.email && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{client.email}</div>}
                                     {client?.phone && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{client.phone}</div>}
+                                    {client?.address && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{client.address}</div>}
+                                    {client?.city && <div style={{ fontSize: '13px', color: 'var(--muted)' }}>{client.city}{client.state ? ', ' + client.state : ''}</div>}
                                 </div>
                                 <div>
                                     <div className="info-label">Issue Date</div>
@@ -396,6 +416,21 @@ export default function InvoiceDetail() {
                                 <div className="notes-section">
                                     <div className="notes-label">Notes</div>
                                     <div className="notes-text">{invoice.notes}</div>
+                                </div>
+                            )}
+
+                            {(company?.paypal_link || company?.stripe_link || company?.venmo_link) && (
+                                <div className="notes-section">
+                                    <div className="notes-label">Pay This Invoice</div>
+                                    {company?.paypal_link && (
+                                        <div className="payment-link">PayPal: <a href={company.paypal_link} target="_blank">{company.paypal_link}</a></div>
+                                    )}
+                                    {company?.stripe_link && (
+                                        <div className="payment-link">Card: <a href={company.stripe_link} target="_blank">{company.stripe_link}</a></div>
+                                    )}
+                                    {company?.venmo_link && (
+                                        <div className="payment-link">Venmo: {company.venmo_link}</div>
+                                    )}
                                 </div>
                             )}
                         </div>
