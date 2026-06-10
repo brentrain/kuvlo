@@ -1,0 +1,258 @@
+'use client'
+
+import { useState } from 'react'
+import { createClient } from '../../utils/supabase'
+import { useRouter } from 'next/navigation'
+
+export default function NewClient() {
+    const [form, setForm] = useState({
+        name: '', phone: '', email: '', address: '', city: '', state: '', zip_code: '', notes: ''
+    })
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+    const router = useRouter()
+    const supabase = createClient()
+
+    const handleChange = (e: any) => {
+        setForm({ ...form, [e.target.name]: e.target.value })
+    }
+
+    const handleSubmit = async () => {
+        if (!form.name) { setError('Client name is required.'); return }
+        setLoading(true)
+        setError('')
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) { router.push('/login'); return }
+        const { error } = await supabase.from('clients').insert({
+            ...form,
+            user_id: user.id
+        })
+        if (error) {
+            setError(error.message)
+            setLoading(false)
+        } else {
+            router.push('/clients')
+        }
+    }
+
+    return (
+        <>
+            <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+          --ink: #0f0f0f;
+          --steel: #1c2b3a;
+          --orange: #e85d04;
+          --fog: #f5f3ef;
+          --muted: #6b7280;
+          --border: #d1cdc6;
+        }
+        body { font-family: 'Barlow', sans-serif; background: var(--fog); }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar {
+          width: 240px;
+          background: var(--steel);
+          display: flex;
+          flex-direction: column;
+          padding: 32px 0;
+          flex-shrink: 0;
+        }
+        .logo {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-weight: 800;
+          font-size: 26px;
+          color: #fff;
+          text-decoration: none;
+          padding: 0 28px;
+          margin-bottom: 40px;
+          display: block;
+        }
+        .logo span { color: var(--orange); }
+        .nav-item {
+          display: block;
+          padding: 12px 28px;
+          font-size: 14px;
+          font-weight: 500;
+          color: rgba(255,255,255,0.5);
+          text-decoration: none;
+          transition: all 0.15s;
+          border-left: 3px solid transparent;
+        }
+        .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .nav-item.active { color: #fff; border-left-color: var(--orange); background: rgba(255,255,255,0.05); }
+        .nav-section {
+          font-size: 10px;
+          font-weight: 700;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.25);
+          padding: 20px 28px 8px;
+        }
+        .signout {
+          margin-top: auto;
+          padding: 12px 28px;
+          font-size: 13px;
+          color: rgba(255,255,255,0.35);
+          cursor: pointer;
+          background: none;
+          border: none;
+          text-align: left;
+          font-family: 'Barlow', sans-serif;
+          transition: color 0.15s;
+        }
+        .signout:hover { color: rgba(255,255,255,0.7); }
+        .main { flex: 1; padding: 48px; overflow-y: auto; }
+        .page-header {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 40px;
+        }
+        .back {
+          font-size: 13px;
+          color: var(--muted);
+          text-decoration: none;
+          border-bottom: 1px solid var(--border);
+          padding-bottom: 1px;
+        }
+        .back:hover { color: var(--ink); }
+        .page-header h1 {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-weight: 800;
+          font-size: 36px;
+          text-transform: uppercase;
+          color: var(--ink);
+        }
+        .form-card {
+          background: #fff;
+          border: 1.5px solid var(--border);
+          padding: 40px;
+          max-width: 640px;
+        }
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.full { grid-column: 1 / -1; }
+        label {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: var(--ink);
+          margin-bottom: 6px;
+        }
+        input, textarea {
+          padding: 11px 13px;
+          border: 1.5px solid var(--border);
+          background: var(--fog);
+          font-family: 'Barlow', sans-serif;
+          font-size: 14px;
+          color: var(--ink);
+          outline: none;
+          transition: border-color 0.15s;
+          width: 100%;
+        }
+        input:focus, textarea:focus { border-color: var(--ink); }
+        textarea { resize: vertical; min-height: 80px; }
+        .error { font-size: 13px; color: #c0392b; margin-bottom: 16px; }
+        .form-actions { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
+        .btn {
+          background: var(--orange);
+          color: #fff;
+          font-family: 'Barlow Condensed', sans-serif;
+          font-weight: 700;
+          font-size: 15px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          padding: 13px 32px;
+          border: none;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+        .btn:hover { background: #c44d00; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-cancel {
+          font-size: 13px;
+          color: var(--muted);
+          text-decoration: none;
+          border-bottom: 1px solid var(--border);
+        }
+        @media (max-width: 768px) {
+          .sidebar { display: none; }
+          .main { padding: 24px 20px; }
+          .form-row { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+            <div className="layout">
+                <aside className="sidebar">
+                    <a href="/" className="logo">KUV<span>LO</span></a>
+                    <p className="nav-section">Main</p>
+                    <a href="/dashboard" className="nav-item">Dashboard</a>
+                    <a href="/clients" className="nav-item active">Clients</a>
+                    <a href="/jobs" className="nav-item">Jobs</a>
+                    <a href="/invoices" className="nav-item">Invoices</a>
+                    <p className="nav-section">Account</p>
+                    <a href="/settings" className="nav-item">Settings</a>
+                    <button className="signout" onClick={async () => { await supabase.auth.signOut(); router.push('/') }}>Sign out</button>
+                </aside>
+
+                <main className="main">
+                    <div className="page-header">
+                        <a href="/clients" className="back">← Clients</a>
+                        <h1>Add Client</h1>
+                    </div>
+
+                    <div className="form-card">
+                        <div className="form-row">
+                            <div className="form-group full">
+                                <label>Full Name *</label>
+                                <input name="name" value={form.name} onChange={handleChange} placeholder="John Smith" />
+                            </div>
+                            <div className="form-group">
+                                <label>Phone</label>
+                                <input name="phone" value={form.phone} onChange={handleChange} placeholder="606-555-0100" />
+                            </div>
+                            <div className="form-group">
+                                <label>Email</label>
+                                <input name="email" value={form.email} onChange={handleChange} placeholder="john@example.com" />
+                            </div>
+                            <div className="form-group full">
+                                <label>Address</label>
+                                <input name="address" value={form.address} onChange={handleChange} placeholder="123 Main St" />
+                            </div>
+                            <div className="form-group">
+                                <label>City</label>
+                                <input name="city" value={form.city} onChange={handleChange} placeholder="Somerset" />
+                            </div>
+                            <div className="form-group">
+                                <label>State</label>
+                                <input name="state" value={form.state} onChange={handleChange} placeholder="KY" />
+                            </div>
+                            <div className="form-group">
+                                <label>Zip Code</label>
+                                <input name="zip_code" value={form.zip_code} onChange={handleChange} placeholder="42501" />
+                            </div>
+                            <div className="form-group full">
+                                <label>Notes</label>
+                                <textarea name="notes" value={form.notes} onChange={handleChange} placeholder="Anything worth remembering about this client..." />
+                            </div>
+                        </div>
+                        {error && <p className="error">{error}</p>}
+                        <div className="form-actions">
+                            <button className="btn" onClick={handleSubmit} disabled={loading}>
+                                {loading ? 'Saving...' : 'Save Client'}
+                            </button>
+                            <a href="/clients" className="btn-cancel">Cancel</a>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </>
+    )
+}
