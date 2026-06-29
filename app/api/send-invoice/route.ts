@@ -4,9 +4,6 @@ import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 export async function POST(request: NextRequest) {
   try {
     const { invoiceId, clientEmail } = await request.json();
@@ -35,6 +32,19 @@ export async function POST(request: NextRequest) {
     }
 
     const accessToken = authHeader.replace("Bearer ", "");
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json(
+        {
+          error:
+            "Missing Supabase environment variables. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file.",
+        },
+        { status: 500 }
+      );
+    }
 
     // Create an authenticated Supabase client
     const supabase = createClient(supabaseUrl, supabaseAnonKey, {
