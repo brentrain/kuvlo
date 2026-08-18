@@ -1,30 +1,56 @@
-import { NextResponse } from "next/server";
-import { supabase } from "../../lib/supabaseClient";
-
-// Note: Install resend package with: npm install resend
-// @ts-ignore - Resend may not be installed
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const notifyEmail = process.env.NOTIFY_EMAIL;
 
-export async function GET() {
+function escapeHtml(value: string | null | undefined) {
+  return (value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+export async function GET(request: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
+  const authHeader = request.headers.get("authorization");
+
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!resend) {
     return NextResponse.json(
-      { error: "Resend package not installed. Run: npm install resend" },
+      { error: "RESEND_API_KEY is not configured" },
       { status: 500 }
     );
   }
 
   if (!notifyEmail) {
     return NextResponse.json(
-      { error: "NOTIFY_EMAIL is not set" },
+      { error: "NOTIFY_EMAIL is not configured" },
       { status: 500 }
     );
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return NextResponse.json(
+      { error: "Server-side Supabase credentials are not configured" },
+      { status: 500 }
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
   try {
-    // Define "today" in UTC (simple version)
     const now = new Date();
     const startOfToday = new Date(
       now.getFullYear(),
@@ -37,33 +63,26 @@ export async function GET() {
       now.getDate() + 1
     );
 
-    // Fetch today's jobs
     const { data: jobs, error: jobsError } = await supabase
       .from("jobs")
-      .select(
-        `
+      .select(`
         id,
         scheduled_at,
         price_cents,
         status,
         notes,
         clients:client_id ( name )
-      `
-      )
+      `)
       .gte("scheduled_at", startOfToday.toISOString())
       .lt("scheduled_at", endOfToday.toISOString())
       .order("scheduled_at", { ascending: true });
 
     if (jobsError) {
       console.error("Error loading jobs:", jobsError);
-      return NextResponse.json(
-        { error: jobsError.message },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: jobsError.message }, { status: 500 });
     }
 
     if (!jobs || jobs.length === 0) {
-      // No jobs today; optional: skip sending
       return NextResponse.json(
         { message: "No jobs scheduled for today." },
         { status: 200 }
@@ -84,17 +103,18 @@ export async function GET() {
 
     const listItemsHtml = (jobs as JobWithClient[])
       .map((job) => {
-        const clientName = job.clients?.[0]?.name ?? "Unknown client";
-        const when = new Date(job.scheduled_at).toLocaleString();
-        const price = formatPrice(job.price_cents);
-        const status = job.status;
+        const clientName = escapeHtml(job.clients?.[0]?.name ?? "Unknown client");
+        const when = escapeHtml(new Date(job.scheduled_at).toLocaleString());
+        const price = escapeHtml(formatPrice(job.price_cents));
+        const status = escapeHtml(job.status);
+        const notes = job.notes ? `<em>${escapeHtml(job.notes)}</em>` : "";
 
         return `<li>
           <strong>${clientName}</strong><br/>
           ${when}<br/>
           Price: ${price}<br/>
           Status: ${status}<br/>
-          ${job.notes ? `<em>${job.notes}</em>` : ""}
+          ${notes}
         </li>`;
       })
       .join("");
@@ -103,15 +123,14 @@ export async function GET() {
       <div>
         <h2>Today's Jobs</h2>
         <p>Here are your jobs scheduled for today:</p>
-        <ul>
-          ${listItemsHtml}
-        </ul>
-        <p style="font-size: 12px; color: #666;">Sent by FieldPro.</p>
+        <ul>${listItemsHtml}</ul>
+        <p style="font-size: 12px; color: #666;">Sent by Kuvlo.</p>
       </div>
     `;
 
+    const fromEmail = process.env.FROM_EMAIL || "noreply@example.com";
     const { error: emailError } = await resend.emails.send({
-      from: "FieldPro <noreply@yourdomain.com>",
+      from: `Kuvlo <${fromEmail}>`,
       to: [notifyEmail],
       subject: `Today's jobs (${jobs.length})`,
       html,
@@ -119,10 +138,7 @@ export async function GET() {
 
     if (emailError) {
       console.error("Email send error:", emailError);
-      return NextResponse.json(
-        { error: "Failed to send email" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
     }
 
     return NextResponse.json(
@@ -131,9 +147,6 @@ export async function GET() {
     );
   } catch (err) {
     console.error("Unexpected error:", err);
-    return NextResponse.json(
-      { error: "Unexpected error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   }
 }
