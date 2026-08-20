@@ -2,26 +2,91 @@ import Link from "next/link";
 
 const FEATURES = [
   {
+    visual: "schedule",
     eyebrow: "Scheduling",
     title: "Know where the work is",
     description: "Plan upcoming jobs, track their status, and keep your day moving without juggling calendars and notes.",
   },
   {
+    visual: "contacts",
     eyebrow: "Contacts",
     title: "Keep every customer close",
     description: "Store names, phone numbers, addresses, and job details together, ready whenever you need them in the field.",
   },
   {
+    visual: "invoice",
     eyebrow: "Invoicing",
     title: "Turn finished work into invoices",
     description: "Create clear, professional invoices from the same place you manage the job and the customer.",
   },
   {
+    visual: "billing",
     eyebrow: "Billing",
     title: "Stay on top of what you earn",
     description: "Keep billing organized so completed work does not get lost and your business keeps moving forward.",
   },
 ];
+
+function FeaturePreview({ type }: { type: string }) {
+  if (type === "schedule") {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-slate-400"><span>Today&apos;s schedule</span><span>3 jobs</span></div>
+        {[
+          ["8:30", "HVAC maintenance", "Confirmed"],
+          ["11:00", "Kitchen repair", "In progress"],
+          ["2:30", "Estimate visit", "Scheduled"],
+        ].map(([time, job, status], index) => (
+          <div key={job} className="grid grid-cols-[44px_1fr_auto] items-center gap-3 rounded-lg border border-white/10 bg-slate-950/80 p-3 text-xs">
+            <span className="font-semibold text-sky-300">{time}</span><span className="text-slate-200">{job}</span>
+            <span className={index === 1 ? "text-amber-300" : "text-emerald-300"}>{status}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (type === "contacts") {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
+          <div className="flex items-start justify-between">
+            <div><p className="font-semibold text-white">Jordan&apos;s Coffee</p><p className="mt-1 text-xs text-slate-400">Primary contact · Jordan Lee</p></div>
+            <span className="rounded-full bg-sky-400/15 px-2 py-1 text-[10px] font-bold text-sky-300">CUSTOMER</span>
+          </div>
+          <div className="mt-4 grid gap-2 text-xs text-slate-300 sm:grid-cols-2">
+            <p>☎ (555) 014-2280</p><p>✉ jordan@example.com</p><p className="sm:col-span-2">⌖ 225 Market Street, Raleigh, NC</p>
+          </div>
+        </div>
+        <div className="flex gap-2"><span className="rounded-md bg-sky-400 px-3 py-2 text-[11px] font-bold text-slate-950">Schedule job</span><span className="rounded-md border border-white/10 px-3 py-2 text-[11px] text-slate-300">View history</span></div>
+      </div>
+    );
+  }
+
+  if (type === "invoice") {
+    return (
+      <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4 text-xs">
+        <div className="flex justify-between border-b border-white/10 pb-3"><div><p className="text-base font-bold text-white">INVOICE</p><p className="text-slate-500">#INV-1042</p></div><div className="text-right"><p className="text-slate-400">Amount due</p><p className="text-lg font-bold text-white">$485.00</p></div></div>
+        <div className="grid grid-cols-[1fr_auto] gap-y-3 py-4 text-slate-300"><span>Service call</span><span>$125.00</span><span>Parts &amp; installation</span><span>$360.00</span></div>
+        <div className="flex items-center justify-between border-t border-white/10 pt-3"><span className="rounded-full bg-amber-400/15 px-2 py-1 font-bold text-amber-300">DRAFT</span><span className="rounded-md bg-sky-400 px-3 py-2 font-bold text-slate-950">Send invoice</span></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2 text-center">
+        {[["Outstanding", "$1,240"], ["Paid", "$3,860"], ["This month", "$5,100"]].map(([label, value]) => (
+          <div key={label} className="rounded-lg border border-white/10 bg-slate-950/80 p-3"><p className="text-[10px] text-slate-500">{label}</p><p className="mt-1 text-sm font-bold text-white">{value}</p></div>
+        ))}
+      </div>
+      <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
+        <div className="mb-3 flex items-end justify-between text-xs"><span className="text-slate-400">Monthly revenue</span><span className="font-semibold text-emerald-300">+18%</span></div>
+        <div className="flex h-20 items-end gap-2">{[35, 52, 44, 68, 57, 82, 72, 94].map((height, index) => <span key={index} className="flex-1 rounded-t bg-sky-400/80" style={{ height: `${height}%` }} />)}</div>
+      </div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   return (
@@ -70,6 +135,10 @@ export default function LandingPage() {
             <div className="grid gap-6 md:grid-cols-2">
             {FEATURES.map((feature) => (
               <article key={feature.title} className="rounded-2xl border border-white/10 bg-slate-900/70 p-7">
+                <div className="mb-6 rounded-xl border border-white/10 bg-slate-900 p-4 shadow-2xl shadow-black/20">
+                  <div className="mb-4 flex gap-1.5"><span className="h-2 w-2 rounded-full bg-red-400/70" /><span className="h-2 w-2 rounded-full bg-amber-400/70" /><span className="h-2 w-2 rounded-full bg-emerald-400/70" /></div>
+                  <FeaturePreview type={feature.visual} />
+                </div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-sky-300">{feature.eyebrow}</p>
                 <h3 className="mt-3 text-xl font-semibold">{feature.title}</h3>
                 <p className="mt-3 leading-7 text-slate-400">{feature.description}</p>
