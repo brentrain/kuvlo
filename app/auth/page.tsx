@@ -269,10 +269,10 @@ export default function AuthPage() {
         <div className="flex flex-col items-center justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-sky-500/20 ring-1 ring-sky-500/40">
             <span className="text-2xl font-semibold tracking-tight text-sky-300">
-              FP
+              K
             </span>
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-white">FieldPro</h1>
+          <h1 className="mt-4 text-2xl font-bold text-white">Kuvlo</h1>
           <p className="mt-2 text-sm text-white/80">
             {isPasswordResetMode
               ? "Set your new password"
