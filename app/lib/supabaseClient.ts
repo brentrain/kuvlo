@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 let supabaseClient: ReturnType<typeof createClient> | null = null;
 
@@ -19,11 +19,16 @@ export function getSupabaseClient() {
   return supabaseClient;
 }
 
-export const supabase = new Proxy({} as ReturnType<typeof createClient>, {
-  get(_target, prop) {
-    return Reflect.get(getSupabaseClient(), prop);
-  },
-  apply(_target, _thisArg, args) {
-    return Reflect.apply(getSupabaseClient() as any, _thisArg, args);
-  },
-});
+// The project does not currently generate Supabase database types. Keep the
+// lazy proxy untyped so query payloads are not incorrectly inferred as `never`.
+export const supabase: SupabaseClient<any> = new Proxy(
+  {} as SupabaseClient<any>,
+  {
+    get(_target, prop) {
+      return Reflect.get(getSupabaseClient(), prop);
+    },
+    apply(_target, _thisArg, args) {
+      return Reflect.apply(getSupabaseClient() as any, _thisArg, args);
+    },
+  }
+);
