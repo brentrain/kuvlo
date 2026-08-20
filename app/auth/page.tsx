@@ -16,7 +16,10 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("mode") === "signup";
+  });
   const [showResetPassword, setShowResetPassword] = useState(false);
   // Use ref to track password reset mode to prevent redirects
   const passwordResetModeRef = useRef(false);
@@ -82,7 +85,7 @@ export default function AuthPage() {
 
       // Only redirect if user exists AND we're not in password reset mode
       if (user && !passwordResetModeRef.current) {
-        router.push("/");
+        router.push("/dashboard");
         return;
       }
 
@@ -123,7 +126,7 @@ export default function AuthPage() {
 
       // Allow normal login redirects - only block if in password reset mode
       if (event === "SIGNED_IN" && session?.user) {
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       }
     });
@@ -161,7 +164,7 @@ export default function AuthPage() {
         if (error) throw error;
 
         // Redirect to dashboard on successful login
-        router.push("/");
+        router.push("/dashboard");
         router.refresh();
       }
     } catch (err: any) {
