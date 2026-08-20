@@ -16,10 +16,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isSignUp, setIsSignUp] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("mode") === "signup";
-  });
+  const [isSignUp, setIsSignUp] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   // Use ref to track password reset mode to prevent redirects
   const passwordResetModeRef = useRef(false);
@@ -38,6 +35,10 @@ export default function AuthPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("mode") === "signup") {
+      setIsSignUp(true);
+    }
+
     // FIRST: Check for password reset token in URL hash - this must happen IMMEDIATELY
     let passwordResetDetected = false;
     
