@@ -56,6 +56,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang="en">
+      <head>
+        <title>Kuvlo</title>
+        <meta
+          name="description"
+          content="Simple field service operations for independent businesses."
+        />
+      </head>
       <body className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top,_#1d4ed8_0,_#020617_55%)] text-slate-50">
         {isAuthPage ? (
           // Auth page: no menu, just center the content
@@ -73,12 +80,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-500/20 ring-1 ring-sky-500/40">
                     <span className="text-xs font-semibold tracking-tight text-sky-300">
-                      FP
+                      K
                     </span>
                   </div>
                   <div>
                     <div className="text-sm font-semibold tracking-tight text-slate-50">
-                      FieldPro
+                      Kuvlo
                     </div>
                     <div className="text-[11px] text-slate-300">
                       Solo service ops, simplified.
@@ -130,7 +137,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {/* Footer */}
             <footer className="border-t border-slate-900/60 bg-slate-950/80">
               <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 text-[11px] text-slate-400">
-                <span>FieldPro · Simple field service CRM</span>
+                <span>Kuvlo · Simple field service CRM</span>
                 <span>v0.1 • Early access</span>
               </div>
             </footer>
