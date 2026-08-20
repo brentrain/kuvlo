@@ -154,6 +154,16 @@ export default function ClientsPage() {
     setError(null);
 
     try {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        router.push("/auth");
+        return;
+      }
+
       const clientData = {
         name: name.trim(),
         phone: phone.trim() || null,
@@ -178,7 +188,7 @@ export default function ClientsPage() {
         // Insert new client
         ({ data, error } = await supabase
           .from("clients")
-          .insert(clientData)
+          .insert({ ...clientData, user_id: user.id })
           .select("*")
           .single());
       }
@@ -210,10 +220,8 @@ export default function ClientsPage() {
         ) {
           setError(
             "❌ PERMISSION DENIED\n\n" +
-            "You don't have permission to add clients. To fix:\n\n" +
-            "1. Go to Supabase Dashboard → SQL Editor\n" +
-            "2. Run 'FIX_CLIENTS_TABLE.sql'\n" +
-            "3. This will fix the permissions"
+            "Your session does not have permission to add this client. " +
+            "Please sign out, sign back in, and try again."
           );
         } else if (error.message?.includes("violates foreign key")) {
           setError(
