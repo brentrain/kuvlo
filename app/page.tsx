@@ -1,173 +1,71 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "./lib/supabaseClient";
+const FEATURES = [
+  {
+    title: "Keep every job organized",
+    description: "Schedule work, track status, and see what is coming next at a glance.",
+  },
+  {
+    title: "Know your customers",
+    description: "Keep client details, addresses, and job history together in one simple place.",
+  },
+  {
+    title: "Invoice with confidence",
+    description: "Create professional invoices and stay on top of the money you have earned.",
+  },
+];
 
-type Job = {
-  id: string;
-  scheduled_at: string;
-  price_cents: number | null;
-  status: string;
-};
-
-export default function DashboardPage() {
-  const router = useRouter();
-  const [jobsToday, setJobsToday] = useState<Job[]>([]);
-  const [jobsThisWeek, setJobsThisWeek] = useState<Job[]>([]);
-  const [upcomingJobs, setUpcomingJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [authChecking, setAuthChecking] = useState(true);
-
-  useEffect(() => {
-    const loadStats = async () => {
-      // Check authentication first
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-
-      setAuthChecking(false);
-      setLoading(true);
-
-      const now = new Date();
-
-      // Today range
-      const startOfToday = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate()
-      );
-      const endOfToday = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 1
-      );
-
-      // Start of week (Sunday as 0)
-      const startOfWeek = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() - now.getDay()
-      );
-
-      // Next 7 days
-      const nextWeek = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate() + 7
-      );
-
-      // Jobs today
-      const { data: todayData } = await supabase
-        .from("jobs")
-        .select("id, scheduled_at, price_cents, status")
-        .gte("scheduled_at", startOfToday.toISOString())
-        .lt("scheduled_at", endOfToday.toISOString());
-
-      // Jobs this week
-      const { data: weekData } = await supabase
-        .from("jobs")
-        .select("id, scheduled_at, price_cents, status")
-        .gte("scheduled_at", startOfWeek.toISOString())
-        .lt("scheduled_at", endOfToday.toISOString());
-
-      // Upcoming jobs (next 7 days)
-      const { data: upcomingData } = await supabase
-        .from("jobs")
-        .select("id, scheduled_at, price_cents, status")
-        .gte("scheduled_at", now.toISOString())
-        .lt("scheduled_at", nextWeek.toISOString())
-        .order("scheduled_at", { ascending: true });
-
-      setJobsToday(todayData || []);
-      setJobsThisWeek(weekData || []);
-      setUpcomingJobs(upcomingData || []);
-      setLoading(false);
-    };
-
-    loadStats();
-  }, [router]);
-
-  if (authChecking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-white">Checking authentication…</p>
-      </div>
-    );
-  }
-
-  const sumRevenue = (jobs: Job[]) =>
-    jobs.reduce(
-      (total, job) => total + (job.price_cents ?? 0),
-      0
-    ) / 100;
-
+export default function LandingPage() {
   return (
-    <div className="space-y-8 p-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-        <p className="mt-1 text-sm text-white/80">
-          Quick view of your work and revenue.
-        </p>
-      </div>
-
-      {/* Summary cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border border-slate-700 bg-slate-800/90 p-4 shadow-sm backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-white/70">
-            Jobs Today
-          </p>
-          <p className="mt-2 text-4xl font-bold text-white">
-            {loading ? "…" : jobsToday.length}
-          </p>
+    <div className="min-h-screen bg-slate-950 text-white">
+      <header className="border-b border-white/10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-lg font-bold text-slate-950">K</span>
+            <span className="text-xl font-semibold tracking-tight">Kuvlo</span>
+          </Link>
+          <Link href="/auth" className="rounded-full border border-white/20 px-5 py-2 text-sm font-semibold transition hover:border-sky-400 hover:text-sky-300">
+            Sign in
+          </Link>
         </div>
+      </header>
 
-        <div className="rounded-lg border border-slate-700 bg-slate-800/90 p-4 shadow-sm backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-white/70">
-            This Week&apos;s Revenue
-          </p>
-          <p className="mt-2 text-4xl font-bold text-white">
-            {loading ? "…" : `$${sumRevenue(jobsThisWeek).toFixed(2)}`}
-          </p>
-        </div>
+      <main>
+        <section className="relative overflow-hidden px-6 py-24 sm:py-32">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.28),_transparent_55%)]" />
+          <div className="relative mx-auto max-w-4xl text-center">
+            <p className="mb-5 text-sm font-semibold uppercase tracking-[0.25em] text-sky-300">Built for independent service businesses</p>
+            <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">Run your field business without the busywork.</h1>
+            <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+              Kuvlo brings your clients, jobs, and invoices into one focused workspace—so you can spend less time managing and more time getting the work done.
+            </p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <Link href="/auth?mode=signup" className="w-full rounded-full bg-sky-400 px-7 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-sky-500/25 transition hover:bg-sky-300 sm:w-auto">
+                Get started
+              </Link>
+              <Link href="/auth" className="w-full rounded-full border border-white/20 px-7 py-3.5 text-sm font-bold transition hover:bg-white/10 sm:w-auto">
+                I already have an account
+              </Link>
+            </div>
+          </div>
+        </section>
 
-        <div className="rounded-lg border border-slate-700 bg-slate-800/90 p-4 shadow-sm backdrop-blur">
-          <p className="text-xs font-semibold uppercase text-white/70">
-            Upcoming (7 days)
-          </p>
-          <p className="mt-2 text-4xl font-bold text-white">
-            {loading ? "…" : upcomingJobs.length}
-          </p>
-        </div>
-      </div>
-
-      {/* Optional: list of upcoming jobs */}
-      <div className="rounded-lg border border-slate-700 bg-slate-800/90 p-4 shadow-sm backdrop-blur">
-        <h2 className="text-lg font-semibold text-white">Next jobs</h2>
-        {loading ? (
-          <p className="mt-2 text-sm text-white/80">Loading…</p>
-        ) : upcomingJobs.length === 0 ? (
-          <p className="mt-2 text-sm text-white/80">
-            No upcoming jobs scheduled.
-          </p>
-        ) : (
-          <ul className="mt-2 space-y-2 text-sm text-white">
-            {upcomingJobs.slice(0, 5).map((job) => (
-              <li key={job.id}>
-                {new Date(job.scheduled_at).toLocaleString()}{" "}
-                <span className="ml-1 text-xs uppercase text-white/70">
-                  ({job.status})
-                </span>
-              </li>
+        <section className="border-y border-white/10 bg-white/[0.03] px-6 py-20">
+          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <article key={feature.title} className="rounded-2xl border border-white/10 bg-slate-900/70 p-7">
+                <div className="mb-5 h-1 w-12 rounded-full bg-sky-400" />
+                <h2 className="text-xl font-semibold">{feature.title}</h2>
+                <p className="mt-3 leading-7 text-slate-400">{feature.description}</p>
+              </article>
             ))}
-          </ul>
-        )}
-      </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="px-6 py-8 text-center text-sm text-slate-500">
+        © {new Date().getFullYear()} Kuvlo. Simple field service operations.
+      </footer>
     </div>
   );
 }
