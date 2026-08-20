@@ -9,7 +9,7 @@ import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 
 const NAV_LINKS = [
-  { href: "/", label: "Dashboard" },
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/jobs", label: "Jobs" },
   { href: "/clients", label: "Clients" },
   { href: "/invoices", label: "Invoices" },
@@ -23,8 +23,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Hide the app chrome on the auth page
-  const isAuthPage = pathname === "/auth";
+  // Public pages provide their own focused layout.
+  const isPublicPage = pathname === "/" || pathname === "/auth";
 
   useEffect(() => {
     // Check auth state
@@ -64,13 +64,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen bg-slate-950 bg-[radial-gradient(circle_at_top,_#1d4ed8_0,_#020617_55%)] text-slate-50">
-        {isAuthPage ? (
-          // Auth page: no menu, just center the content
-          <div className="flex min-h-screen items-center justify-center">
-            <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl shadow-sky-900/30 backdrop-blur">
-              {children}
+        {isPublicPage ? (
+          pathname === "/auth" ? (
+            <div className="flex min-h-screen items-center justify-center">
+              <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl shadow-sky-900/30 backdrop-blur">
+                {children}
+              </div>
             </div>
-          </div>
+          ) : (
+            children
+          )
         ) : (
           // App shell with header + content
           <div className="flex min-h-screen flex-col">
