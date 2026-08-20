@@ -275,7 +275,7 @@ export async function POST(request: NextRequest) {
     // Send email
     const fromEmail = companyProfile?.email || process.env.FROM_EMAIL || "noreply@fieldpro.app";
     const { error: emailError } = await resend.emails.send({
-      from: `${companyProfile?.company_name || "FieldPro"} <${fromEmail}>`,
+      from: `${companyProfile?.company_name || "Kuvlo"} <${fromEmail}>`,
       to: [clientEmail],
       subject: `Invoice ${invoice.invoice_number} from ${companyProfile?.company_name || "Your Company"}`,
       html: emailHtml,
@@ -301,4 +301,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
