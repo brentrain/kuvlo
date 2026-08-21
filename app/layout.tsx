@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/jobs", label: "Jobs" },
   { href: "/clients", label: "Clients" },
   { href: "/invoices", label: "Invoices" },
+  { href: "/billing", label: "Billing" },
   { href: "/company", label: "Company" },
   { href: "/account", label: "Account" },
 ];
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Public pages provide their own focused layout.
-  const isPublicPage = pathname === "/" || pathname === "/auth";
+  const isPublicPage = pathname === "/" || pathname === "/auth" || pathname?.startsWith("/pay/");
 
   useEffect(() => {
     // Check auth state

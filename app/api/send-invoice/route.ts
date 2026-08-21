@@ -3,6 +3,9 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const escapeHtml = (value: unknown) => String(value ?? "")
+  .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;")
+  .replaceAll('"', "&quot;").replaceAll("'", "&#039;");
 
 export async function POST(request: NextRequest) {
   try {
@@ -136,7 +139,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Get payment link (prioritize LemonSqueezy, then others)
-    const paymentLink = companyProfile?.lemonsqueezy_link || 
+    const legacyPaymentLink = companyProfile?.lemonsqueezy_link || 
                        companyProfile?.stripe_link || 
                        companyProfile?.paypal_link || 
                        companyProfile?.venmo_link;
@@ -144,7 +147,7 @@ export async function POST(request: NextRequest) {
     // Build invoice HTML
     const itemsHtml = (invoiceItems || []).map((item: any) => `
       <tr style="border-bottom: 1px solid #e5e7eb;">
-        <td style="padding: 12px; text-align: left;">${item.description}</td>
+        <td style="padding: 12px; text-align: left;">${escapeHtml(item.description)}</td>
         <td style="padding: 12px; text-align: right;">${item.quantity}</td>
         <td style="padding: 12px; text-align: right;">${formatCurrency(item.unit_price_cents)}</td>
         <td style="padding: 12px; text-align: right; font-weight: 600;">${formatCurrency(item.quantity * item.unit_price_cents)}</td>
@@ -166,7 +169,11 @@ export async function POST(request: NextRequest) {
     ].filter(Boolean).join(", ");
 
     // Create invoice view URL (public link)
-    const invoiceUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invoices/${invoiceId}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://kuvlo.io";
+    const invoiceUrl = invoice.payment_token
+      ? `${appUrl}/pay/${invoice.payment_token}`
+      : `${appUrl}/invoices/${invoiceId}`;
+    const paymentLink = invoice.payment_token ? invoiceUrl : legacyPaymentLink;
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -179,7 +186,7 @@ export async function POST(request: NextRequest) {
           <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 30px;">
             ${companyProfile?.logo_url ? `<img src="${companyProfile.logo_url}" alt="Company Logo" style="max-height: 60px; margin-bottom: 20px;">` : ""}
             
-            <h1 style="color: #111827; font-size: 24px; margin-bottom: 10px;">${companyProfile?.company_name || "Invoice"}</h1>
+            <h1 style="color: #111827; font-size: 24px; margin-bottom: 10px;">${escapeHtml(companyProfile?.company_name || "Invoice")}</h1>
             
             ${companyAddress ? `<p style="color: #6b7280; font-size: 14px; margin-bottom: 5px;">${companyAddress}</p>` : ""}
             ${companyProfile?.phone ? `<p style="color: #6b7280; font-size: 14px; margin-bottom: 5px;">Phone: ${companyProfile.phone}</p>` : ""}
@@ -193,7 +200,7 @@ export async function POST(request: NextRequest) {
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
               <div>
                 <h3 style="color: #374151; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Bill To:</h3>
-                <p style="color: #111827; font-weight: 500; margin: 0;">${invoice.clients?.name || "Client"}</p>
+                <p style="color: #111827; font-weight: 500; margin: 0;">${escapeHtml(invoice.clients?.name || "Client")}</p>
                 ${clientAddress ? `<p style="color: #6b7280; font-size: 14px; margin-top: 4px;">${clientAddress}</p>` : ""}
                 ${invoice.clients?.email ? `<p style="color: #6b7280; font-size: 14px;">${invoice.clients.email}</p>` : ""}
               </div>
@@ -260,7 +267,7 @@ export async function POST(request: NextRequest) {
             ${invoice.notes ? `
               <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                 <p style="color: #374151; font-size: 14px; font-weight: 600; margin-bottom: 8px;">Notes:</p>
-                <p style="color: #6b7280; font-size: 14px; margin: 0;">${invoice.notes}</p>
+                <p style="color: #6b7280; font-size: 14px; margin: 0;">${escapeHtml(invoice.notes)}</p>
               </div>
             ` : ""}
             
@@ -273,7 +280,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // Send email
-    const fromEmail = companyProfile?.email || process.env.FROM_EMAIL || "noreply@fieldpro.app";
+    const fromEmail = process.env.FROM_EMAIL || "noreply@kuvlo.io";
     const { error: emailError } = await resend.emails.send({
       from: `${companyProfile?.company_name || "Kuvlo"} <${fromEmail}>`,
       to: [clientEmail],
