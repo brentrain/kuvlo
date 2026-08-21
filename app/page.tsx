@@ -105,12 +105,15 @@ export default function LandingPage() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/auth?mode=signup" className="w-full rounded-full bg-gradient-to-r from-cyan-300 to-sky-400 px-7 py-4 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition hover:brightness-110 sm:w-auto">
-                Start organizing your business
+                Start free with up to 5 clients
               </Link>
               <Link href="/auth" className="w-full rounded-full border border-white/20 px-7 py-3.5 text-sm font-bold transition hover:bg-white/10 sm:w-auto">
                 I already have an account
               </Link>
             </div>
+            <p className="mt-4 text-sm font-medium text-cyan-100/80">
+              No time limit. Add your first five clients and try the complete workflow.
+            </p>
             <div className="mx-auto mt-10 grid max-w-3xl gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm font-semibold text-slate-200 backdrop-blur sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:p-4">
               <span className="rounded-xl bg-white/5 px-3 py-3">Send the invoice</span>
               <span className="hidden text-cyan-300 sm:block">→</span>
@@ -165,9 +168,9 @@ export default function LandingPage() {
         <section className="border-t border-white/10 px-6 py-20 text-center">
           <div className="mx-auto max-w-3xl rounded-3xl bg-gradient-to-br from-cyan-300 via-sky-400 to-violet-500 px-5 py-10 text-slate-950 shadow-2xl shadow-cyan-500/20 sm:px-8 sm:py-12">
             <h2 className="text-3xl font-bold tracking-tight">Ready to put the busywork in one place?</h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-slate-800">Start organizing your customers, schedule, invoices, and billing with Kuvlo.</p>
+            <p className="mx-auto mt-4 max-w-xl text-lg text-slate-800">Start organizing your customers, schedule, invoices, and billing with Kuvlo. Your first five clients are free.</p>
             <Link href="/auth?mode=signup" className="mt-8 inline-flex rounded-full bg-slate-950 px-7 py-3.5 text-sm font-bold text-white transition hover:bg-slate-800">
-              Create your account
+              Start your free plan
             </Link>
           </div>
         </section>
