@@ -26,7 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Public pages provide their own focused layout.
-  const isPublicPage = pathname === "/" || pathname === "/auth" || pathname === "/admin" || pathname?.startsWith("/pay/");
+  const isPublicPage = pathname === "/" || pathname === "/auth" || pathname?.startsWith("/admin") || pathname?.startsWith("/pay/");
 
   useEffect(() => {
     // Check auth state

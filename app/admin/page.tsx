@@ -20,14 +20,19 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const signOut = async () => {
     await supabase.auth.signOut();
-    router.push("/auth?redirect=/admin");
+    router.push("/admin/login");
   };
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push("/auth?redirect=/admin"); return; }
+      if (!session) { router.replace("/admin/login"); return; }
       const response = await fetch("/api/admin/overview", { headers: { Authorization: `Bearer ${session.access_token}` } });
       const result = await response.json();
+      if (response.status === 401 || response.status === 403) {
+        await supabase.auth.signOut();
+        router.replace("/admin/login?denied=1");
+        return;
+      }
       if (!response.ok) { setError(result.error || "Creator dashboard unavailable"); return; }
       setData(result);
     }
