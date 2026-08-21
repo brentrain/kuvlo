@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [jobsThisWeek, setJobsThisWeek] = useState<Job[]>([]);
   const [upcomingJobs, setUpcomingJobs] = useState<Job[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [welcomeName, setWelcomeName] = useState("");
   const [loading, setLoading] = useState(true);
   const [authChecking, setAuthChecking] = useState(true);
 
@@ -42,6 +43,9 @@ export default function DashboardPage() {
 
       setAuthChecking(false);
       setLoading(true);
+
+      const metadataName = user.user_metadata?.full_name || user.user_metadata?.name;
+      setWelcomeName(metadataName || user.email?.split("@")[0] || "there");
 
       const now = new Date();
 
@@ -97,17 +101,25 @@ export default function DashboardPage() {
         .from("invoices")
         .select("id,total_cents,status,issue_date,paid_at");
 
+      const profileQuery = supabase
+        .from("company_profiles")
+        .select("company_name")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       const [
         { data: todayData },
         { data: weekData },
         { data: upcomingData },
         { data: invoiceData },
-      ] = await Promise.all([todayQuery, weekQuery, upcomingQuery, invoiceQuery]);
+        { data: profileData },
+      ] = await Promise.all([todayQuery, weekQuery, upcomingQuery, invoiceQuery, profileQuery]);
 
       setJobsToday(todayData || []);
       setJobsThisWeek(weekData || []);
       setUpcomingJobs(upcomingData || []);
       setInvoices(invoiceData || []);
+      if (profileData?.company_name) setWelcomeName(profileData.company_name);
       setLoading(false);
     };
 
@@ -144,7 +156,8 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8 p-6">
       <div>
-        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
+        <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-300">Welcome, {welcomeName || "there"}</p>
+        <h1 className="mt-2 text-3xl font-bold text-white">Dashboard</h1>
         <p className="mt-1 text-sm text-white/80">
           Quick view of your work and revenue.
         </p>
