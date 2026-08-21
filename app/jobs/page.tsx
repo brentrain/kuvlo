@@ -110,11 +110,19 @@ export default function JobsPage() {
     setAdding(true);
     setError(null);
 
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      setError("Your session expired. Please sign in again.");
+      setAdding(false);
+      return;
+    }
+
     const price_cents = price ? Math.round(parseFloat(price) * 100) : null;
 
     const { data, error } = await supabase
       .from("jobs")
       .insert({
+        user_id: user.id,
         client_id: clientId,
         scheduled_at: startTime,
         price_cents,
