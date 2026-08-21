@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import AnalyticsTracker from "./components/AnalyticsTracker";
 
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body className="min-h-screen bg-[#07111f] bg-[radial-gradient(circle_at_top_left,_rgba(6,182,212,0.22),_transparent_38%),radial-gradient(circle_at_top_right,_rgba(139,92,246,0.2),_transparent_34%)] text-slate-50">
+        <AnalyticsTracker />
         {isPublicPage ? (
           pathname === "/auth" ? (
             <div className="flex min-h-screen items-center justify-center">

@@ -14,11 +14,12 @@ export async function GET(request: Request) {
     const weekStart = new Date(now); weekStart.setDate(now.getDate() - 7);
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [usersResult, profilesResult, invoicesResult, webhookResult] = await Promise.all([
+    const [usersResult, profilesResult, invoicesResult, webhookResult, analyticsResult] = await Promise.all([
       service.auth.admin.listUsers({ page: 1, perPage: 1000 }),
       service.from("company_profiles").select("user_id,plan,subscription_status,stripe_charges_enabled,created_at"),
       service.from("invoices").select("id,total_cents,status,paid_at,created_at"),
       service.from("webhook_events").select("provider,event_name,received_at,processed_at").order("received_at", { ascending: false }).limit(100),
+      service.from("page_views").select("visitor_id,path,referrer,device,created_at").order("created_at", { ascending: false }).limit(10000),
     ]);
     if (usersResult.error || profilesResult.error || invoicesResult.error || webhookResult.error) throw new Error("Could not load platform metrics");
 
@@ -30,6 +31,16 @@ export async function GET(request: Request) {
     const webhookEvents = webhookResult.data || [];
     const failedWebhooks = webhookEvents.filter((event) => !event.processed_at);
     const latestWebhook = webhookEvents[0]?.received_at || null;
+    const visits = analyticsResult.data || [];
+    const dayStart = new Date(now); dayStart.setHours(0, 0, 0, 0);
+    const visitSince = (date: Date) => visits.filter((visit) => new Date(visit.created_at) >= date);
+    const unique = (items: typeof visits) => new Set(items.map((visit) => visit.visitor_id)).size;
+    const tally = (key: "path" | "device" | "referrer") => Object.entries(visits.reduce<Record<string, number>>((counts, visit) => {
+      const value = visit[key] || (key === "referrer" ? "Direct" : "Unknown");
+      counts[value] = (counts[value] || 0) + 1;
+      return counts;
+    }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, count]) => ({ name, count }));
+    const totalUnique = unique(visits);
 
     console.log(JSON.stringify({ level: "info", msg: "admin_overview", requestId, ms: Date.now() - started }));
     return NextResponse.json({
@@ -54,6 +65,20 @@ export async function GET(request: Request) {
         outstandingCents: openAmount,
         paidInvoices: paid.length,
         openInvoices: invoices.length - paid.length,
+      },
+      analytics: {
+        available: !analyticsResult.error,
+        totalViews: visits.length,
+        uniqueVisitors: totalUnique,
+        viewsToday: visitSince(dayStart).length,
+        viewsWeek: visitSince(weekStart).length,
+        viewsMonth: visitSince(monthStart).length,
+        uniqueToday: unique(visitSince(dayStart)),
+        uniqueMonth: unique(visitSince(monthStart)),
+        signupConversionPercent: totalUnique ? Math.min(100, Math.round((usersResult.data.users.length / totalUnique) * 1000) / 10) : 0,
+        topPages: tally("path"),
+        devices: tally("device"),
+        referrers: tally("referrer"),
       },
       recentWebhooks: webhookEvents.slice(0, 12),
       generatedAt: now.toISOString(),
