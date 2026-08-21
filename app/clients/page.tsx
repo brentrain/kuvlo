@@ -28,7 +28,8 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
-  const freeLimitReached = clients.length >= FREE_CLIENT_LIMIT;
+  const [plan, setPlan] = useState<"free" | "pro">("free");
+  const freeLimitReached = plan === "free" && clients.length >= FREE_CLIENT_LIMIT;
 
   // form fields
   const [name, setName] = useState("");
@@ -68,9 +69,16 @@ export default function ClientsPage() {
       setError(null);
 
       try {
-        const { data, error } = await supabase
-          .from("clients")
-          .select("*"); // no order() so we don't depend on created_at
+        const [clientsResult, profileResult] = await Promise.all([
+          supabase.from("clients").select("*"),
+          supabase
+            .from("company_profiles")
+            .select("plan")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+        ]);
+        const { data, error } = clientsResult;
+        setPlan(profileResult.data?.plan === "pro" ? "pro" : "free");
 
       if (error) {
         console.error("Supabase error loading clients:", error);
@@ -297,21 +305,25 @@ export default function ClientsPage() {
       <div className="rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-400/10 to-violet-500/10 p-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-bold text-white">Free plan</p>
+            <p className="text-sm font-bold text-white">{plan === "pro" ? "Pro plan" : "Free plan"}</p>
             <p className="mt-1 text-xs text-slate-300">
-              Try every core workflow with up to {FREE_CLIENT_LIMIT} clients.
+              {plan === "pro" ? "Add and manage clients without the free-plan limit." : `Try every core workflow with up to ${FREE_CLIENT_LIMIT} clients.`}
             </p>
           </div>
-          <span className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-cyan-200">
-            {Math.min(clients.length, FREE_CLIENT_LIMIT)} / {FREE_CLIENT_LIMIT}
-          </span>
+          {plan === "free" ? (
+            <span className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-cyan-200">
+              {Math.min(clients.length, FREE_CLIENT_LIMIT)} / {FREE_CLIENT_LIMIT}
+            </span>
+          ) : null}
         </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-950/70">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-violet-400 transition-[width]"
-            style={{ width: `${Math.min((clients.length / FREE_CLIENT_LIMIT) * 100, 100)}%` }}
-          />
-        </div>
+        {plan === "free" ? (
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-950/70">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-violet-400 transition-[width]"
+              style={{ width: `${Math.min((clients.length / FREE_CLIENT_LIMIT) * 100, 100)}%` }}
+            />
+          </div>
+        ) : null}
         {freeLimitReached ? (
           <p className="mt-3 text-sm font-semibold text-amber-200">
             You have reached the free-plan limit. Your five clients remain fully available; upgrade access will unlock additional clients.
