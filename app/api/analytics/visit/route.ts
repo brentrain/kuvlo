@@ -3,6 +3,7 @@ import { createServiceClient } from "../../../lib/serverSupabase";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DEVICES = new Set(["mobile", "tablet", "desktop"]);
+const campaignValue = (value: unknown) => typeof value === "string" && value.length <= 100 && /^[a-z0-9_.-]+$/i.test(value) ? value.toLowerCase() : null;
 
 export async function POST(request: Request) {
   try {
@@ -21,6 +22,10 @@ export async function POST(request: Request) {
       path,
       referrer,
       device,
+      source: campaignValue(body.source),
+      medium: campaignValue(body.medium),
+      campaign: campaignValue(body.campaign),
+      content: campaignValue(body.content),
     });
     if (error) throw error;
 
@@ -34,4 +39,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not record visit" }, { status: 500 });
   }
 }
-

@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       service.from("company_profiles").select("user_id,plan,subscription_status,stripe_charges_enabled,created_at"),
       service.from("invoices").select("id,total_cents,status,paid_at,created_at"),
       service.from("webhook_events").select("provider,event_name,received_at,processed_at").order("received_at", { ascending: false }).limit(100),
-      service.from("page_views").select("visitor_id,path,referrer,device,created_at").order("created_at", { ascending: false }).limit(10000),
+      service.from("page_views").select("visitor_id,path,referrer,device,source,medium,campaign,content,created_at").order("created_at", { ascending: false }).limit(10000),
     ]);
     if (usersResult.error || profilesResult.error || invoicesResult.error || webhookResult.error) throw new Error("Could not load platform metrics");
 
@@ -41,6 +41,11 @@ export async function GET(request: Request) {
       return counts;
     }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, count]) => ({ name, count }));
     const totalUnique = unique(visits);
+    const facebookVisits = visits.filter((visit) => visit.source === "facebook" || visit.referrer?.includes("facebook.com") || visit.referrer?.includes("fb.com"));
+    const campaigns = Object.entries(visits.reduce<Record<string, number>>((counts, visit) => {
+      if (visit.campaign) counts[visit.campaign] = (counts[visit.campaign] || 0) + 1;
+      return counts;
+    }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, count]) => ({ name, count }));
 
     console.log(JSON.stringify({ level: "info", msg: "admin_overview", requestId, ms: Date.now() - started }));
     return NextResponse.json({
@@ -76,9 +81,12 @@ export async function GET(request: Request) {
         uniqueToday: unique(visitSince(dayStart)),
         uniqueMonth: unique(visitSince(monthStart)),
         signupConversionPercent: totalUnique ? Math.min(100, Math.round((usersResult.data.users.length / totalUnique) * 1000) / 10) : 0,
+        facebookViews: facebookVisits.length,
+        facebookVisitors: unique(facebookVisits),
         topPages: tally("path"),
         devices: tally("device"),
         referrers: tally("referrer"),
+        campaigns,
       },
       recentWebhooks: webhookEvents.slice(0, 12),
       generatedAt: now.toISOString(),

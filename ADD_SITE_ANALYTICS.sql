@@ -4,6 +4,10 @@ create table if not exists public.page_views (
   path text not null check (char_length(path) between 1 and 500),
   referrer text check (referrer is null or char_length(referrer) <= 255),
   device text not null check (device in ('mobile', 'tablet', 'desktop')),
+  source text,
+  medium text,
+  campaign text,
+  content text,
   created_at timestamptz not null default now()
 );
 
@@ -18,3 +22,7 @@ alter table public.page_views enable row level security;
 revoke all on table public.page_views from anon, authenticated;
 grant all on table public.page_views to service_role;
 
+alter table public.page_views add column if not exists source text;
+alter table public.page_views add column if not exists medium text;
+alter table public.page_views add column if not exists campaign text;
+alter table public.page_views add column if not exists content text;

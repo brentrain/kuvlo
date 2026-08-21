@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 const VISITOR_KEY = "kuvlo_anonymous_visitor";
+export const ANALYTICS_EXCLUDED_KEY = "kuvlo_analytics_excluded";
 
 function deviceCategory() {
   const width = window.innerWidth;
@@ -16,7 +17,7 @@ export default function AnalyticsTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!pathname || pathname.startsWith("/admin")) return;
+    if (!pathname || pathname.startsWith("/admin") || window.localStorage.getItem(ANALYTICS_EXCLUDED_KEY) === "true") return;
 
     let visitorId = window.localStorage.getItem(VISITOR_KEY);
     if (!visitorId) {
@@ -31,14 +32,23 @@ export default function AnalyticsTracker() {
       referrer = null;
     }
 
+    const query = new URLSearchParams(window.location.search);
     void fetch("/api/analytics/visit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ visitorId, path: pathname, referrer, device: deviceCategory() }),
+      body: JSON.stringify({
+        visitorId,
+        path: pathname,
+        referrer,
+        device: deviceCategory(),
+        source: query.get("utm_source"),
+        medium: query.get("utm_medium"),
+        campaign: query.get("utm_campaign"),
+        content: query.get("utm_content"),
+      }),
       keepalive: true,
     });
   }, [pathname]);
 
   return null;
 }
-
