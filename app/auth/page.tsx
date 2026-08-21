@@ -33,6 +33,12 @@ export default function AuthPage() {
     return false;
   });
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const destination = () => {
+    if (typeof window === "undefined") return "/dashboard";
+    return new URLSearchParams(window.location.search).get("redirect") === "/admin"
+      ? "/admin"
+      : "/dashboard";
+  };
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("mode") === "signup") {
@@ -86,7 +92,7 @@ export default function AuthPage() {
 
       // Only redirect if user exists AND we're not in password reset mode
       if (user && !passwordResetModeRef.current) {
-        router.push("/dashboard");
+        router.push(destination());
         return;
       }
 
@@ -127,7 +133,7 @@ export default function AuthPage() {
 
       // Allow normal login redirects - only block if in password reset mode
       if (event === "SIGNED_IN" && session?.user) {
-        router.push("/dashboard");
+        router.push(destination());
         router.refresh();
       }
     });
@@ -165,7 +171,7 @@ export default function AuthPage() {
         if (error) throw error;
 
         // Redirect to dashboard on successful login
-        router.push("/dashboard");
+        router.push(destination());
         router.refresh();
       }
     } catch (err: any) {

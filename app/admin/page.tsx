@@ -21,7 +21,7 @@ export default function AdminPage() {
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { router.push("/auth"); return; }
+      if (!session) { router.push("/auth?redirect=/admin"); return; }
       const response = await fetch("/api/admin/overview", { headers: { Authorization: `Bearer ${session.access_token}` } });
       const result = await response.json();
       if (!response.ok) { setError(result.error || "Creator dashboard unavailable"); return; }
