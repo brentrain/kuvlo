@@ -17,6 +17,8 @@ type Client = {
   created_at?: string;
 };
 
+const FREE_CLIENT_LIMIT = 5;
+
 export default function ClientsPage() {
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
@@ -26,6 +28,7 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [authChecking, setAuthChecking] = useState(true);
+  const freeLimitReached = clients.length >= FREE_CLIENT_LIMIT;
 
   // form fields
   const [name, setName] = useState("");
@@ -195,9 +198,14 @@ export default function ClientsPage() {
 
       if (error) {
         console.error("Supabase error adding client:", error);
-        
+
         // Provide more helpful error messages
-        if (
+        if (error.message?.includes("FREE_PLAN_CLIENT_LIMIT")) {
+          setError(
+            "FREE PLAN LIMIT REACHED\n\n" +
+            "Your free plan includes up to 5 clients. Upgrade to add more clients while keeping everything you have already created."
+          );
+        } else if (
           error.message?.includes("relation") ||
           error.message?.includes("does not exist") ||
           error.message?.includes("schema cache") ||
@@ -257,8 +265,8 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 p-3 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-white">Clients</h1>
           <p className="mt-1 text-sm text-white/80">
@@ -284,6 +292,31 @@ export default function ClientsPage() {
             Export to Excel
           </button>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-cyan-400/10 to-violet-500/10 p-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-white">Free plan</p>
+            <p className="mt-1 text-xs text-slate-300">
+              Try every core workflow with up to {FREE_CLIENT_LIMIT} clients.
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold text-cyan-200">
+            {Math.min(clients.length, FREE_CLIENT_LIMIT)} / {FREE_CLIENT_LIMIT}
+          </span>
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-950/70">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-violet-400 transition-[width]"
+            style={{ width: `${Math.min((clients.length / FREE_CLIENT_LIMIT) * 100, 100)}%` }}
+          />
+        </div>
+        {freeLimitReached ? (
+          <p className="mt-3 text-sm font-semibold text-amber-200">
+            You have reached the free-plan limit. Your five clients remain fully available; upgrade access will unlock additional clients.
+          </p>
+        ) : null}
       </div>
 
       {/* Error display */}
@@ -416,10 +449,14 @@ export default function ClientsPage() {
             )}
             <button
               type="submit"
-              disabled={adding}
+              disabled={adding || (!editing && freeLimitReached)}
               className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
             >
-              {adding ? (editing ? "Updating..." : "Adding...") : (editing ? "Update Client" : "Add Client")}
+              {adding
+                ? editing ? "Updating..." : "Adding..."
+                : editing ? "Update Client"
+                : freeLimitReached ? "5-client limit reached"
+                : "Add Client"}
             </button>
           </div>
         </form>
