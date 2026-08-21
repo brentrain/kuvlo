@@ -41,6 +41,7 @@ export async function GET(request: Request) {
       return counts;
     }, {})).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, count]) => ({ name, count }));
     const totalUnique = unique(visits);
+    const publicSignups = usersResult.data.users.filter((user) => !isCreator(user)).length;
     const facebookVisits = visits.filter((visit) => visit.source === "facebook" || visit.referrer?.includes("facebook.com") || visit.referrer?.includes("fb.com"));
     const campaigns = Object.entries(visits.reduce<Record<string, number>>((counts, visit) => {
       if (visit.campaign) counts[visit.campaign] = (counts[visit.campaign] || 0) + 1;
@@ -80,7 +81,8 @@ export async function GET(request: Request) {
         viewsMonth: visitSince(monthStart).length,
         uniqueToday: unique(visitSince(dayStart)),
         uniqueMonth: unique(visitSince(monthStart)),
-        signupConversionPercent: totalUnique ? Math.min(100, Math.round((usersResult.data.users.length / totalUnique) * 1000) / 10) : 0,
+        publicSignups,
+        signupConversionPercent: totalUnique ? Math.min(100, Math.round((publicSignups / totalUnique) * 1000) / 10) : 0,
         facebookViews: facebookVisits.length,
         facebookVisitors: unique(facebookVisits),
         topPages: tally("path"),
