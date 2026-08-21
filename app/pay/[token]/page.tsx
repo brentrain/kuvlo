@@ -9,6 +9,7 @@ type InvoiceData = {
   company: { name: string; email?: string | null };
   items: { description: string; quantity: number; unit_price_cents: number }[];
   canPay: boolean;
+  paymentMethods: { paypal?: string | null; venmo?: string | null; stripe?: string | null };
 };
 
 const money = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
@@ -52,7 +53,15 @@ export default function PayInvoicePage() {
           <div className="divide-y divide-white/10">{data.items.map((item, index) => <div key={index} className="flex justify-between gap-4 py-3"><div><p className="font-semibold">{item.description}</p><p className="text-sm text-slate-400">{item.quantity} × {money(item.unit_price_cents)}</p></div><p className="font-bold">{money(item.quantity * item.unit_price_cents)}</p></div>)}</div>
           <div className="flex items-end justify-between border-t-2 border-white/10 pt-5"><span className="text-slate-300">Total due</span><span className="text-3xl font-black text-cyan-300">{money(data.invoice.totalCents)}</span></div>
           {data.invoice.notes && <div className="rounded-xl bg-white/5 p-4 text-sm text-slate-300"><strong className="text-white">Notes:</strong> {data.invoice.notes}</div>}
-          {data.invoice.status === "paid" ? <div className="rounded-xl bg-emerald-400/15 p-4 text-center font-bold text-emerald-200">Paid in full</div> : data.canPay ? <button onClick={pay} disabled={paying} className="w-full rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-5 py-4 text-lg font-black text-slate-950 disabled:opacity-50">{paying ? "Opening secure checkout…" : `Pay ${money(data.invoice.totalCents)} securely`}</button> : <div className="rounded-xl bg-amber-400/10 p-4 text-center text-amber-100">Online payment is not yet available. Contact {data.company.email || data.company.name} to arrange payment.</div>}
+          {data.invoice.status === "paid" ? <div className="rounded-xl bg-emerald-400/15 p-4 text-center font-bold text-emerald-200">Paid in full</div> : <div className="space-y-3">
+            {data.canPay && <button onClick={pay} disabled={paying} className="w-full rounded-xl bg-gradient-to-r from-emerald-300 to-cyan-300 px-5 py-4 text-lg font-black text-slate-950 disabled:opacity-50">{paying ? "Opening secure checkout…" : `Pay ${money(data.invoice.totalCents)} by card or bank`}</button>}
+            <div className="grid gap-2 sm:grid-cols-2">
+              {data.paymentMethods.paypal && <a href={data.paymentMethods.paypal} rel="noopener noreferrer" className="rounded-xl border border-sky-300/30 bg-sky-400/10 px-4 py-3 text-center font-bold text-sky-100">Pay with PayPal</a>}
+              {data.paymentMethods.venmo && <a href={data.paymentMethods.venmo} rel="noopener noreferrer" className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-4 py-3 text-center font-bold text-cyan-100">Pay with Venmo</a>}
+              {!data.canPay && data.paymentMethods.stripe && <a href={data.paymentMethods.stripe} rel="noopener noreferrer" className="rounded-xl border border-violet-300/30 bg-violet-400/10 px-4 py-3 text-center font-bold text-violet-100">Pay securely</a>}
+            </div>
+            {!data.canPay && !data.paymentMethods.paypal && !data.paymentMethods.venmo && !data.paymentMethods.stripe && <div className="rounded-xl bg-amber-400/10 p-4 text-center text-amber-100">Online payment is not yet available. Contact {data.company.email || data.company.name} to arrange payment.</div>}
+          </div>}
         </div>
       </section>}
       <p className="mt-5 text-center text-xs text-slate-500">Secure invoice experience powered by Kuvlo</p>

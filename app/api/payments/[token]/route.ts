@@ -17,7 +17,7 @@ async function loadInvoice(token: string) {
     service.from("clients").select("name,email").eq("id", invoice.client_id).maybeSingle(),
     service
       .from("company_profiles")
-      .select("company_name,email,stripe_account_id,stripe_charges_enabled")
+      .select("company_name,email,stripe_account_id,stripe_charges_enabled,paypal_link,venmo_link,stripe_link")
       .eq("user_id", invoice.user_id)
       .maybeSingle(),
     service
@@ -34,6 +34,13 @@ export async function GET(_request: Request, context: Context) {
     const result = await loadInvoice(token);
     if (!result) return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     const { invoice, client, company, items } = result;
+    const safeLink = (value: string | null | undefined, hosts: string[]) => {
+      if (!value) return null;
+      try {
+        const url = new URL(value);
+        return url.protocol === "https:" && hosts.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`)) ? url.toString() : null;
+      } catch { return null; }
+    };
     return NextResponse.json({
       invoice: {
         invoiceNumber: invoice.invoice_number,
@@ -47,6 +54,11 @@ export async function GET(_request: Request, context: Context) {
       company: { name: company?.company_name || "Service provider", email: company?.email || null },
       items,
       canPay: Boolean(company?.stripe_account_id && company?.stripe_charges_enabled && invoice.status !== "paid"),
+      paymentMethods: {
+        paypal: safeLink(company?.paypal_link, ["paypal.me", "paypal.com"]),
+        venmo: safeLink(company?.venmo_link, ["venmo.com"]),
+        stripe: safeLink(company?.stripe_link, ["stripe.com"]),
+      },
     });
   } catch (error) {
     console.error("Public invoice error", error);

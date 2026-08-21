@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabaseClient";
+import Link from "next/link";
 
 type CompanyProfile = {
   id?: string;
@@ -314,12 +315,13 @@ export default function CompanyPage() {
 
         {/* Payment Integration */}
         <div className="rounded-lg border border-slate-700 bg-slate-800/90 p-4 shadow-sm backdrop-blur">
-          <h2 className="mb-4 text-lg font-semibold text-white">
-            Payment Integration Links
-          </h2>
-          <p className="mb-4 text-sm text-white/80">
-            Add your payment links to include them on invoices
-          </p>
+          <h2 className="text-lg font-semibold text-white">How you get paid</h2>
+          <p className="mt-1 text-sm text-white/80">Offer customers the payment methods you accept. These appear on their secure invoice page.</p>
+          <div className="my-4 rounded-xl border border-emerald-400/25 bg-emerald-400/10 p-4">
+            <p className="font-semibold text-emerald-100">Bank deposits and card payments</p>
+            <p className="mt-1 text-sm text-slate-300">Connect Stripe securely. Your bank details are entered directly with Stripe and are never stored by Kuvlo.</p>
+            <Link href="/billing" className="mt-3 inline-flex rounded-lg bg-emerald-300 px-4 py-2 text-sm font-bold text-slate-950">Set up bank and card payments</Link>
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
@@ -339,7 +341,7 @@ export default function CompanyPage() {
 
             <div>
               <label className="block text-sm font-medium text-white">
-                Stripe Link
+                Backup Stripe payment link
               </label>
               <input
                 type="url"
@@ -369,7 +371,7 @@ export default function CompanyPage() {
 
             <div>
               <label className="block text-sm font-medium text-white">
-                LemonSqueezy Link
+                Other checkout link
               </label>
               <input
                 type="url"
@@ -381,7 +383,7 @@ export default function CompanyPage() {
                 placeholder="https://yourstore.lemonsqueezy.com/checkout/..."
               />
               <p className="mt-1 text-xs text-white/60">
-                Your LemonSqueezy checkout link (will be shown as "Pay Now" button)
+                Optional legacy checkout link. Stripe Connect is recommended for invoice payments.
               </p>
             </div>
           </div>
@@ -400,4 +402,3 @@ export default function CompanyPage() {
     </div>
   );
 }
-

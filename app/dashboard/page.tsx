@@ -11,11 +11,20 @@ type Job = {
   status: string;
 };
 
+type Invoice = {
+  id: string;
+  total_cents: number;
+  status: string;
+  issue_date: string;
+  paid_at: string | null;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [jobsToday, setJobsToday] = useState<Job[]>([]);
   const [jobsThisWeek, setJobsThisWeek] = useState<Job[]>([]);
   const [upcomingJobs, setUpcomingJobs] = useState<Job[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [authChecking, setAuthChecking] = useState(true);
 
@@ -63,30 +72,42 @@ export default function DashboardPage() {
       );
 
       // Jobs today
-      const { data: todayData } = await supabase
+      const todayQuery = supabase
         .from("jobs")
         .select("id, scheduled_at, price_cents, status")
         .gte("scheduled_at", startOfToday.toISOString())
         .lt("scheduled_at", endOfToday.toISOString());
 
       // Jobs this week
-      const { data: weekData } = await supabase
+      const weekQuery = supabase
         .from("jobs")
         .select("id, scheduled_at, price_cents, status")
         .gte("scheduled_at", startOfWeek.toISOString())
         .lt("scheduled_at", endOfToday.toISOString());
 
       // Upcoming jobs (next 7 days)
-      const { data: upcomingData } = await supabase
+      const upcomingQuery = supabase
         .from("jobs")
         .select("id, scheduled_at, price_cents, status")
         .gte("scheduled_at", now.toISOString())
         .lt("scheduled_at", nextWeek.toISOString())
         .order("scheduled_at", { ascending: true });
 
+      const invoiceQuery = supabase
+        .from("invoices")
+        .select("id,total_cents,status,issue_date,paid_at");
+
+      const [
+        { data: todayData },
+        { data: weekData },
+        { data: upcomingData },
+        { data: invoiceData },
+      ] = await Promise.all([todayQuery, weekQuery, upcomingQuery, invoiceQuery]);
+
       setJobsToday(todayData || []);
       setJobsThisWeek(weekData || []);
       setUpcomingJobs(upcomingData || []);
+      setInvoices(invoiceData || []);
       setLoading(false);
     };
 
@@ -107,6 +128,19 @@ export default function DashboardPage() {
       0
     ) / 100;
 
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const paid = invoices.filter((invoice) => invoice.status === "paid");
+  const paidSince = (date: Date) => paid
+    .filter((invoice) => invoice.paid_at && new Date(invoice.paid_at) >= date)
+    .reduce((sum, invoice) => sum + invoice.total_cents, 0);
+  const outstanding = invoices
+    .filter((invoice) => invoice.status !== "paid")
+    .reduce((sum, invoice) => sum + invoice.total_cents, 0);
+  const money = (cents: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+
   return (
     <div className="space-y-8 p-6">
       <div>
@@ -117,7 +151,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-slate-700 bg-slate-800/90 p-4 shadow-sm backdrop-blur">
           <p className="text-xs font-semibold uppercase text-white/70">
             Jobs Today
@@ -143,6 +177,27 @@ export default function DashboardPage() {
           <p className="mt-2 text-4xl font-bold text-white">
             {loading ? "…" : upcomingJobs.length}
           </p>
+        </div>
+
+        <div className="rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-emerald-200">Paid Today</p>
+          <p className="mt-2 text-3xl font-bold text-white">{loading ? "…" : money(paidSince(startOfToday))}</p>
+        </div>
+
+        <div className="rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-cyan-200">Paid This Week</p>
+          <p className="mt-2 text-3xl font-bold text-white">{loading ? "…" : money(paidSince(startOfWeek))}</p>
+        </div>
+
+        <div className="rounded-lg border border-violet-400/20 bg-violet-400/10 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-violet-200">Paid This Month</p>
+          <p className="mt-2 text-3xl font-bold text-white">{loading ? "…" : money(paidSince(startOfMonth))}</p>
+        </div>
+
+        <div className="rounded-lg border border-amber-400/20 bg-amber-400/10 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase text-amber-100">Outstanding</p>
+          <p className="mt-2 text-3xl font-bold text-white">{loading ? "…" : money(outstanding)}</p>
+          <p className="mt-1 text-xs text-slate-400">All open invoices</p>
         </div>
       </div>
 
