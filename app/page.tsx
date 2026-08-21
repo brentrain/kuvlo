@@ -108,13 +108,13 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.28),_transparent_55%)]" />
           <div className="relative mx-auto max-w-4xl text-center">
             <p className="mb-5 text-sm font-semibold uppercase tracking-[0.2em] text-sky-300">Built for independent service businesses and solopreneurs</p>
-            <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">Your work happens in the field. Run it all from one place.</h1>
+            <h1 className="text-5xl font-bold tracking-tight sm:text-7xl">Schedule jobs, manage customers, send invoices, and track payments.</h1>
             <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Billing, invoicing, scheduling, and contacts come together in Kuvlo—so you can stay organized, get paid, and focus on the work in front of you.
+              Kuvlo helps independent service professionals run their business from the field—all in one place, without spreadsheets, paperwork, or complicated software.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/auth?mode=signup" className="w-full rounded-full bg-sky-400 px-7 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-sky-500/25 transition hover:bg-sky-300 sm:w-auto">
-                Get started
+                Start organizing your business
               </Link>
               <Link href="/auth" className="w-full rounded-full border border-white/20 px-7 py-3.5 text-sm font-bold transition hover:bg-white/10 sm:w-auto">
                 I already have an account
