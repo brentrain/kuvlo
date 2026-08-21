@@ -17,14 +17,14 @@ const FEATURES = [
   {
     visual: "invoice",
     eyebrow: "Invoicing",
-    title: "Turn finished work into invoices",
-    description: "Create clear, professional invoices from the same place you manage the job and the customer.",
+    title: "Send an invoice with a Pay Now button",
+    description: "Create a professional invoice and give customers a direct way to pay through your preferred payment provider.",
   },
   {
     visual: "billing",
-    eyebrow: "Billing",
-    title: "Stay on top of what you earn",
-    description: "Keep billing organized so completed work does not get lost and your business keeps moving forward.",
+    eyebrow: "Payments",
+    title: "Make it easier for customers to pay",
+    description: "Connect a Stripe, PayPal, Venmo, or Lemon Squeezy payment link and move from completed work to payment with fewer steps.",
   },
 ];
 
@@ -69,7 +69,7 @@ function FeaturePreview({ type }: { type: string }) {
       <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4 text-xs">
         <div className="flex justify-between border-b border-white/10 pb-3"><div><p className="text-base font-bold text-white">INVOICE</p><p className="text-slate-500">#INV-1042</p></div><div className="text-right"><p className="text-slate-400">Amount due</p><p className="text-lg font-bold text-white">$485.00</p></div></div>
         <div className="grid grid-cols-[1fr_auto] gap-y-3 py-4 text-slate-300"><span>Service call</span><span>$125.00</span><span>Parts &amp; installation</span><span>$360.00</span></div>
-        <div className="flex items-center justify-between border-t border-white/10 pt-3"><span className="rounded-full bg-amber-400/15 px-2 py-1 font-bold text-amber-300">DRAFT</span><span className="rounded-md bg-sky-400 px-3 py-2 font-bold text-slate-950">Send invoice</span></div>
+        <div className="flex items-center justify-between border-t border-white/10 pt-3"><span className="rounded-full bg-emerald-400/15 px-2 py-1 font-bold text-emerald-300">READY TO PAY</span><span className="rounded-md bg-gradient-to-r from-cyan-300 to-sky-400 px-3 py-2 font-bold text-slate-950">Pay now</span></div>
       </div>
     );
   }
@@ -111,6 +111,13 @@ export default function LandingPage() {
                 I already have an account
               </Link>
             </div>
+            <div className="mx-auto mt-10 grid max-w-3xl gap-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm font-semibold text-slate-200 backdrop-blur sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center sm:p-4">
+              <span className="rounded-xl bg-white/5 px-3 py-3">Send the invoice</span>
+              <span className="hidden text-cyan-300 sm:block">→</span>
+              <span className="rounded-xl bg-white/5 px-3 py-3">Customer taps Pay Now</span>
+              <span className="hidden text-cyan-300 sm:block">→</span>
+              <span className="rounded-xl bg-emerald-400/10 px-3 py-3 text-emerald-300">Receive payment</span>
+            </div>
           </div>
         </section>
 
@@ -149,8 +156,8 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-500/20 to-cyan-400/10 p-6 sm:p-8">
-              <p className="text-2xl font-semibold leading-9">Schedule the job. Keep the contact. Send the invoice. Track the billing.</p>
-              <p className="mt-5 text-sky-200">One place, from first call to final payment.</p>
+              <p className="text-2xl font-semibold leading-9">Schedule the job. Keep the contact. Send the invoice. Give customers a simple way to pay.</p>
+              <p className="mt-5 text-cyan-200">One place, from first call to received payment.</p>
             </div>
           </div>
         </section>
