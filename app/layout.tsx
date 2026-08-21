@@ -24,10 +24,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
 
   // Public pages provide their own focused layout.
-  const isPublicPage = pathname === "/" || pathname === "/auth" || pathname?.startsWith("/pay/");
+  const isPublicPage = pathname === "/" || pathname === "/auth" || pathname === "/admin" || pathname?.startsWith("/pay/");
 
   useEffect(() => {
     // Check auth state
@@ -36,13 +35,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      if (user) {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          const response = await fetch("/api/admin/access", { headers: { Authorization: `Bearer ${session.access_token}` } });
-          if (response.ok) setIsAdmin(Boolean((await response.json()).creator));
-        }
-      }
       setLoading(false);
     };
 
@@ -61,7 +53,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const handleLogout = async () => {
     setMobileMenuOpen(false);
     await supabase.auth.signOut();
-    setIsAdmin(false);
     router.push("/auth");
     router.refresh();
   };
@@ -128,7 +119,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                       </Link>
                     );
                   })}
-                  {isAdmin ? <Link href="/admin" className={pathname === "/admin" ? "rounded-full bg-gradient-to-r from-violet-300 to-fuchsia-400 px-3 py-1 text-slate-950" : "rounded-full border border-violet-300/30 px-3 py-1 text-violet-200 hover:bg-violet-400/10"}>Admin Console</Link> : null}
                   {!loading && user && (
                     <button
                       onClick={handleLogout}
@@ -158,7 +148,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     const active = pathname === link.href || pathname?.startsWith(`${link.href}/`);
                     return <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)} className={active ? "block rounded-xl bg-gradient-to-r from-cyan-300 to-sky-400 px-4 py-3.5 font-bold text-slate-950" : "block rounded-xl px-4 py-3.5 font-semibold text-slate-200 hover:bg-white/5"}>{link.label}</Link>;
                   })}
-                  {isAdmin ? <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="block rounded-xl border border-violet-300/30 bg-violet-400/10 px-4 py-3.5 font-bold text-violet-200">Admin Console</Link> : null}
                   {!loading && user ? <button onClick={handleLogout} className="mt-2 w-full rounded-xl border border-rose-400/30 bg-rose-400/10 px-4 py-3.5 text-left font-semibold text-rose-300">Log out</button> : null}
                 </nav>
               ) : null}
