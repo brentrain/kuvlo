@@ -34,3 +34,9 @@ export async function authenticateRequest(
   if (error || !data.user) return null;
   return { user: data.user, supabase };
 }
+
+export function isCreator(user: User) {
+  const ids = new Set((process.env.ADMIN_USER_IDS || "").split(",").map((value) => value.trim()).filter(Boolean));
+  const emails = new Set((process.env.ADMIN_EMAILS || "brentvsmaximvs@gmail.com").toLowerCase().split(",").map((value) => value.trim()).filter(Boolean));
+  return ids.has(user.id) || Boolean(user.email && emails.has(user.email.toLowerCase()));
+}

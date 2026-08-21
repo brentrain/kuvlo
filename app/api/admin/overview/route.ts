@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { authenticateRequest, createServiceClient } from "../../../lib/serverSupabase";
+import { authenticateRequest, createServiceClient, isCreator } from "../../../lib/serverSupabase";
 
 export async function GET(request: Request) {
   const started = Date.now();
@@ -7,8 +7,7 @@ export async function GET(request: Request) {
   try {
     const auth = await authenticateRequest(request);
     if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const admins = new Set((process.env.ADMIN_USER_IDS || "").split(",").map((id) => id.trim()).filter(Boolean));
-    if (!admins.has(auth.user.id)) return NextResponse.json({ error: "Creator access required" }, { status: 403 });
+    if (!isCreator(auth.user)) return NextResponse.json({ error: "Creator access required" }, { status: 403 });
 
     const service = createServiceClient();
     const now = new Date();
